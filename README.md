@@ -6,6 +6,8 @@ Aplikasi web sederhana untuk inferensi *object detection* berbasis YOLO pada kas
 * `paper`
 * `plastic_bags`
 
+Berikut overview dataset untuk project ini: [Classification of Inorganic Waste Materials model Computer Vision Dataset](https://universe.roboflow.com/main-f2mqy/classification-of-inorganic-waste-materials-model)
+
 Aplikasi ini dirancang untuk:
 
 * memenuhi kebutuhan **UAS Computer Vision**
@@ -14,7 +16,7 @@ Aplikasi ini dirancang untuk:
 
 ---
 
-## 1. Struktur Repository (Disarankan)
+## 1. Struktur Repository
 
 ```
 .
