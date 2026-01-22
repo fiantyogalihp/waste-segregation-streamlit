@@ -109,26 +109,7 @@ Model akan di-cache otomatis di:
 
 ---
 
-## 5. Deploy ke Streamlit Community Cloud (Gratis)
-
-### Langkah Deploy
-
-1. Push repo ke GitHub
-2. Buka: [https://streamlit.io/cloud](https://streamlit.io/cloud)
-3. Klik **New App**
-4. Pilih:
-
-   * Repository
-   * Branch (mis. `main`)
-   * Main file: `app.py`
-5. Tambahkan **Secrets** (MODEL_URL)
-6. Klik **Deploy**
-
-Selesai. App akan online dengan URL publik.
-
----
-
-## 6. Troubleshooting Umum
+## 5. Troubleshooting Umum
 
 ### Model gagal download / error `.tmp`
 
@@ -148,9 +129,7 @@ Normal. Model sedang di-download (sekali saja).
 
 ---
 
-## 7. Catatan untuk Laporan / Video UAS
-
-Alur yang disarankan untuk presentasi:
+## 6. Catatan
 
 1. Dataset & augmentasi (Roboflow)
 2. Training YOLO
@@ -160,10 +139,10 @@ Alur yang disarankan untuk presentasi:
 
 ---
 
-## 8. Teknologi yang Digunakan
+## 7. Teknologi yang Digunakan
 
 * Python
-* Ultralytics YOLO
+* Ultralytics YOLOv8
 * Streamlit
 * GitHub Releases
 * Roboflow (dataset & preprocessing)
