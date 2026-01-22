@@ -24,7 +24,7 @@ CACHE_DIR.mkdir(parents=True, exist_ok=True)
 # https://github.com/<user>/<repo>/releases/download/<tag>/best.pt
 DEFAULT_MODEL_URL = os.getenv(
     "MODEL_URL",
-    "https://github.com/fiantyogalihp/waste-segregation-streamlit/releases/download/v1.0/best.pt"  # <-- GANTI INI
+    "https://github.com/fiantyogalihp/waste-segregation-streamlit/releases/download/v1.0.0/best.pt"  # <-- GANTI INI
 )
 
 # Nama file model yang disimpan di cache
@@ -50,60 +50,69 @@ def sha256_file(path: Path) -> str:
             h.update(chunk)
     return h.hexdigest()
 
-def download_file(url: str, dst: Path, expected_sha256: str = "") -> Tuple[bool, str]:
-    """
-    Download file ke dst. Return (ok, message).
-    Menggunakan requests via urllib agar dependency minimal.
-    """
+def download_file(url: str, dst: Path, expected_sha256: str = ""):
     import urllib.request
 
+    dst.parent.mkdir(parents=True, exist_ok=True)
     tmp = dst.with_suffix(dst.suffix + ".tmp")
 
+    # Bersihkan tmp kalau ada sisa gagal sebelumnya
     try:
-        st.info(f"Downloading model dari Release Asset...\n{url}")
-        progress = st.progress(0)
-        status = st.empty()
+        if tmp.exists():
+            tmp.unlink()
+    except Exception:
+        pass
 
-        def reporthook(blocknum, blocksize, totalsize):
-            if totalsize > 0:
-                downloaded = blocknum * blocksize
-                pct = min(downloaded / totalsize, 1.0)
-                progress.progress(int(pct * 100))
-                status.write(f"Downloaded: {downloaded/1024/1024:.1f} MB / {totalsize/1024/1024:.1f} MB")
-            else:
-                status.write(f"Downloaded: {blocknum*blocksize/1024/1024:.1f} MB")
+    try:
+        # Download ke tmp
+        urllib.request.urlretrieve(url, tmp.as_posix())
 
-        urllib.request.urlretrieve(url, tmp.as_posix(), reporthook=reporthook)
+        # Kalau download sukses tapi tmp entah kenapa tidak ada, fallback:
+        if not tmp.exists():
+            # Jika dst sudah ada & ukuran masuk akal, anggap sudah berhasil
+            if dst.exists() and dst.stat().st_size > 1_000_000:
+                return True, f"Model sudah ada: {dst}"
+            return False, f"Download selesai tapi file tmp tidak ditemukan: {tmp}"
 
-        # Validasi sha256 jika diberikan
+        # Optional SHA256 check
         if expected_sha256:
             got = sha256_file(tmp)
             if got.lower() != expected_sha256.lower():
                 tmp.unlink(missing_ok=True)
                 return False, f"SHA256 mismatch. expected={expected_sha256} got={got}"
 
-        tmp.replace(dst)
+        # Atomic replace
+        os.replace(tmp.as_posix(), dst.as_posix())
         return True, f"Model tersimpan di: {dst}"
+
     except Exception as e:
-        tmp.unlink(missing_ok=True)
+        # Kalau error tapi dst sudah ada & valid → anggap sukses
+        if dst.exists() and dst.stat().st_size > 1_000_000:
+            return True, f"Model sudah ada: {dst} (download step error diabaikan: {e})"
+        try:
+            tmp.unlink(missing_ok=True)
+        except Exception:
+            pass
         return False, f"Gagal download model: {e}"
 
 def ensure_model(model_url: str, filename: str, expected_sha256: str = "") -> Path:
     dst = CACHE_DIR / filename
+    dst.parent.mkdir(parents=True, exist_ok=True)
 
-    # Jika sudah ada, cek sha256 (kalau diset)
-    if dst.exists():
+    # Jika sudah ada dan ukurannya masuk akal, pakai langsung
+    if dst.exists() and dst.stat().st_size > 1_000_000:
+        # Kalau ada sha256, validasi
         if expected_sha256:
             got = sha256_file(dst)
             if got.lower() != expected_sha256.lower():
-                st.warning("Model cache ada, tapi SHA256 berbeda. Download ulang...")
+                st.warning("Model ada tapi SHA256 berbeda. Download ulang...")
                 dst.unlink(missing_ok=True)
             else:
                 return dst
         else:
             return dst
 
-    ok, msg = download_file(model_url, dst, expected_sha256)
+    ok, msg = download_file(model_url, dst, expected_sha256.strip())
     if not ok:
         st.error(msg)
         st.stop()
